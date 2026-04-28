@@ -18,7 +18,7 @@ Documentación y estructura de los scripts generados para el sistema de **Retrie
 | `.env.example` | Variables de entorno requeridas (API keys, rutas de DB, etc.). |
 | `test_rag.py` | Suite de evaluación: métricas de recuperación (Recall@K, MRR) y calidad de generación (BLEU, ROUGE, LLM-as-a-Judge). |
 
-> 💡 *Si tus scripts tienen nombres diferentes o incluye funcionalidades adicionales (ej. `monitor.py`, `cache.py`, `streamlit_ui.py`), actualiza esta tabla en consecuencia.*
+
 
 ## Requisitos
 
