@@ -19,5 +19,7 @@ chroma_db_pdf/
 
 # Secrets & logs
 .env
+.env.local
+.env.*.local
 *.log
-.DS_Store
+.DS_Store.env
