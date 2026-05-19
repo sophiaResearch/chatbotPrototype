@@ -1,0 +1,1 @@
+Aquí van los archivos pdf que se quieren usar para el RAG
