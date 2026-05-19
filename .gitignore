@@ -1,0 +1,23 @@
+# Python / Entornos
+__pycache__/
+*.py[cod]
+*.so
+venv/
+.venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos pesados / locales
+*.pdf
+chroma_db/
+chroma_db_pdf/
+
+# Secrets & logs
+.env
+*.log
+.DS_Store

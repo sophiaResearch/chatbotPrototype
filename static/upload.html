@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir PDF - Chatbot UNIMINUTO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .drop-zone:hover {
+            background: #eef0ff;
+            border-color: #764ba2;
+        }
+
+        .drop-zone.dragover {
+            background: #e0e4ff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone-text {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .drop-zone-text strong {
+            color: #667eea;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .file-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .file-remove {
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+        }
+
+        .file-remove:hover {
+            color: #c0392b;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.02);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .pdf-list-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .pdf-list-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .pdf-item {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .pdf-item::before {
+            content: "📄";
+            margin-right: 10px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+
+        .reindex-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📤 Subir Archivos PDF</h1>
+            <p>Sube documentos PDF para agregar al chatbot</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="drop-zone" id="drop-zone">
+                <div class="drop-zone-icon">📁</div>
+                <div class="drop-zone-text">
+                    Arrastra archivos PDF aquí o <strong>haz clic para seleccionar</strong>
+                </div>
+                <input type="file" id="file-input" accept=".pdf" multiple>
+            </div>
+
+            <div class="file-list" id="file-list"></div>
+
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+
+            <button class="btn" id="upload-btn" disabled onclick="uploadFiles()">
+                Subir Archivos
+            </button>
+
+            <div class="message" id="message"></div>
+        </div>
+
+        <div class="pdf-list-section">
+            <h2>📚 PDFs en el Sistema</h2>
+            <div id="pdf-list">Cargando...</div>
+
+            <div class="reindex-section">
+                <button class="btn btn-secondary" id="reindex-btn" onclick="reindexPDFs()">
+                    🔄 Re-indexar Todos los PDFs
+                </button>
+                <div class="message" id="reindex-message"></div>
+            </div>
+
+            <a href="/" class="nav-link">← Volver al Chatbot</a>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const uploadBtn = document.getElementById('upload-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressFill = document.getElementById('progress-fill');
+        const messageDiv = document.getElementById('message');
+
+        let selectedFiles = [];
+
+        // Click to select files
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            for (const file of files) {
+                if (file.name.toLowerCase().endsWith('.pdf')) {
+                    if (!selectedFiles.some(f => f.name === file.name)) {
+                        selectedFiles.push(file);
+                    }
+                }
+            }
+            renderFileList();
+        }
+
+        function renderFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${(file.size / 1024).toFixed(1)} KB</span>
+                    <span class="file-remove" onclick="removeFile(${index})">&times;</span>
+                `;
+                fileList.appendChild(item);
+            });
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderFileList();
+        }
+
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner"></span> Subiendo...';
+            progressBar.style.display = 'block';
+            hideMessage(messageDiv);
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('/upload-pdf', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.detail || 'Error al subir archivo');
+                    }
+
+                    progressFill.style.width = `${((i + 1) / selectedFiles.length) * 100}%`;
+
+                } catch (error) {
+                    showMessage(messageDiv, `❌ Error con ${file.name}: ${error.message}`, 'error');
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = 'Subir Archivos';
+                    return;
+                }
+            }
+
+            showMessage(messageDiv, `✅ ${selectedFiles.length} archivo(s) subido(s) correctamente`, 'success');
+            selectedFiles = [];
+            fileInput.value = '';
+            renderFileList();
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = 'Subir Archivos';
+            progressBar.style.display = 'none';
+            progressFill.style.width = '0%';
+
+            // Refresh PDF list
+            loadPDFList();
+        }
+
+        async function loadPDFList() {
+            const pdfListDiv = document.getElementById('pdf-list');
+            try {
+                const response = await fetch('/list-pdfs');
+                const data = await response.json();
+
+                if (data.files.length === 0) {
+                    pdfListDiv.innerHTML = '<p style="color:#666;">No hay PDFs subidos aún.</p>';
+                } else {
+                    pdfListDiv.innerHTML = data.files.map(f => `<div class="pdf-item">${f}</div>`).join('');
+                }
+            } catch (error) {
+                pdfListDiv.innerHTML = '<p style="color:#e74c3c;">Error al cargar la lista de PDFs.</p>';
+            }
+        }
+
+        async function reindexPDFs() {
+            const reindexBtn = document.getElementById('reindex-btn');
+            const reindexMsg = document.getElementById('reindex-message');
+
+            reindexBtn.disabled = true;
+            reindexBtn.innerHTML = '<span class="spinner"></span> Re-indexando...';
+            hideMessage(reindexMsg);
+
+            try {
+                const response = await fetch('/reindex', {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Error durante la indexación');
+                }
+
+                showMessage(reindexMsg, `✅ ${result.message}`, 'success');
+            } catch (error) {
+                showMessage(reindexMsg, `❌ ${error.message}`, 'error');
+            } finally {
+                reindexBtn.disabled = false;
+                reindexBtn.innerHTML = '🔄 Re-indexar Todos los PDFs';
+            }
+        }
+
+        function showMessage(element, text, type) {
+            element.textContent = text;
+            element.className = `message ${type}`;
+            element.style.display = 'block';
+        }
+
+        function hideMessage(element) {
+            element.style.display = 'none';
+        }
+
+        // Load PDF list on page load
+        loadPDFList();
+    </script>
+</body>
+</html>

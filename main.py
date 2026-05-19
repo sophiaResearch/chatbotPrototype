@@ -2,7 +2,7 @@
 main.py - Optimizado para Qwen3-32B en Groq
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -15,6 +15,9 @@ from dotenv import load_dotenv
 import os
 import re
 import traceback
+import shutil
+from pathlib import Path
+import subprocess
 
 load_dotenv()
 
@@ -72,7 +75,7 @@ embeddings = HuggingFaceEmbeddings(
 
 print(" Conectando a ChromaDB...")
 vectorstore = Chroma(
-    persist_directory="./chroma_db",
+    persist_directory="./chroma_db_pdf",
     embedding_function=embeddings
 )
 
@@ -180,6 +183,110 @@ async def chat(request: ChatRequest):
 @app.get("/health")
 async def health():
     return {"status": "ok", "docs": doc_count, "model": "qwen/qwen3-32b"}
+
+# ─────────────────────────────────────────────
+# UPLOAD PAGE
+# ─────────────────────────────────────────────
+
+@app.get("/upload")
+async def upload_page():
+    return FileResponse("static/upload.html")
+
+# ─────────────────────────────────────────────
+# PDF UPLOAD ENDPOINT
+# ─────────────────────────────────────────────
+
+@app.post("/upload-pdf")
+async def upload_pdf(file: UploadFile = File(...)):
+    """
+    Sube un archivo PDF al directorio docs/
+    """
+    try:
+        if not file.filename.lower().endswith(".pdf"):
+            raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
+
+        docs_dir = Path("./docs")
+        docs_dir.mkdir(exist_ok=True)
+
+        file_path = docs_dir / file.filename
+
+        if file_path.exists():
+            raise HTTPException(status_code=400, detail=f"El archivo {file.filename} ya existe en docs/")
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        file_size = file_path.stat().st_size
+
+        return {
+            "status": "ok",
+            "message": f"Archivo {file.filename} subido correctamente",
+            "filename": file.filename,
+            "size_bytes": file_size,
+            "path": str(file_path)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al subir archivo: {str(e)}")
+
+# ─────────────────────────────────────────────
+# RE-INDEX ENDPOINT
+# ─────────────────────────────────────────────
+
+@app.post("/reindex")
+async def reindex_pdfs():
+    """
+    Re-indexa todos los PDFs del directorio docs/ en ChromaDB
+    """
+    try:
+        result = subprocess.run(
+            ["python", "ingest.py"],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+
+        if result.returncode != 0:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error durante la indexación:\n{result.stderr}"
+            )
+
+        return {
+            "status": "ok",
+            "message": "PDFs re-indexados correctamente",
+            "output": result.stdout
+        }
+
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="La indexación tardó demasiado")
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+# ─────────────────────────────────────────────
+# LIST UPLOADED PDFs
+# ─────────────────────────────────────────────
+
+@app.get("/list-pdfs")
+async def list_pdfs():
+    """
+    Lista todos los PDFs en el directorio docs/
+    """
+    try:
+        docs_dir = Path("./docs")
+        pdf_files = [f.name for f in docs_dir.glob("*.pdf")]
+
+        return {
+            "status": "ok",
+            "count": len(pdf_files),
+            "files": sorted(pdf_files)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
